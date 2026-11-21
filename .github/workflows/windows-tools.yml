@@ -1,0 +1,26 @@
+name: Prepare official Apple installers
+on:
+  workflow_dispatch:
+  push:
+    paths: ['.github/workflows/windows-tools.yml']
+permissions:
+  contents: read
+jobs:
+  download:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Download official vendor installers
+        run: |
+          mkdir installers
+          curl --fail --location --retry 3 'https://www.apple.com/itunes/download/win64' -o installers/iTunes64Setup.exe &
+          itunes_pid=$!
+          curl --fail --location --retry 3 'https://updates.cdn-apple.com/2020/windows/001-39935-20200911-1A70AA56-F448-11EA-8CC0-99D41950005E/iCloudSetup.exe' -o installers/iCloudSetup.exe
+          wait "$itunes_pid"
+          sha256sum installers/*.exe
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Official-Apple-Windows-installers
+          path: installers/*.exe
+          compression-level: 0
+          retention-days: 1

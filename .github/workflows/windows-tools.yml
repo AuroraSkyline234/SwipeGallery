@@ -18,6 +18,21 @@ jobs:
           curl --fail --location --retry 3 'https://updates.cdn-apple.com/2020/windows/001-39935-20200911-1A70AA56-F448-11EA-8CC0-99D41950005E/iCloudSetup.exe' -o installers/iCloudSetup.exe
           wait "$itunes_pid"
           sha256sum installers/*.exe
+      - name: Extract Apple support packages
+        run: |
+          7z x installers/iTunes64Setup.exe -oitunes-extracted
+          7z x installers/iCloudSetup.exe -oicloud-extracted
+          mkdir support
+          find itunes-extracted icloud-extracted -type f -name '*.msi' -print
+          find itunes-extracted -type f \( -name 'AppleApplicationSupport*.msi' -o -name 'AppleMobileDeviceSupport*.msi' -o -name 'Bonjour*.msi' \) -exec cp {} support/ \;
+          find icloud-extracted -type f -name 'AppleApplicationSupport*.msi' -exec cp -n {} support/ \;
+          ls -lh support
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Apple-support-packages
+          path: support/*.msi
+          compression-level: 9
+          retention-days: 1
       - uses: actions/upload-artifact@v4
         with:
           name: Official-Apple-Windows-installers

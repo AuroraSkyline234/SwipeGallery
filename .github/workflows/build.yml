@@ -22,6 +22,16 @@ jobs:
           -derivedDataPath build CODE_SIGNING_ALLOWED=NO build
       - name: Package IPA for AltStore
         run: |
+          python3 - <<'PY'
+          import plistlib
+          with open('build/Build/Products/Release-iphoneos/SwipeGallery.app/Info.plist', 'rb') as source:
+              info = plistlib.load(source)
+          for key in ('CFBundleName', 'CFBundleDisplayName'):
+              name = info[key]
+              assert name and name.isascii(), f'AltServer requires an ASCII app name: {key}'
+              print(f'{key}: {name}')
+          print('Build:', info['CFBundleVersion'])
+          PY
           mkdir -p package/Payload
           cp -R build/Build/Products/Release-iphoneos/SwipeGallery.app package/Payload/
           cd package
